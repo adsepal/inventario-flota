@@ -139,12 +139,14 @@ function persist(){
   render();
 }
 
+function asList(v){ return Array.isArray(v) ? v : Object.values(v||{}) }
+
 function boot(){
   if(dbRef){
     dbRef.on('value', snap=>{
       const remote = snap.val();
       if(remote){
-        state = remote;
+        state = { items: asList(remote.items), movements: asList(remote.movements) };
         if(ensureTracksOpen()) saveRemote();
       } else {
         loadLocalFallback();
