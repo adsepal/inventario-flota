@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+<head>
+<script>
+  // Lista de usuarios y sus contraseñas autorizadas
+  var usuariosValidos = {
+    "adsepal": "flotahuelva2026",
+    "antonio": "flotahuelva2026",
+    "carlos": "flotahuelva2026"
+  };
+
+  var autenticado = false;
+
+  while (!autenticado) {
+    var usuario = prompt("Introduce tu nombre de usuario:");
+    var clave = prompt("Introduce tu contraseña:");
+
+    // Comprueba si el usuario existe y la contraseña coincide
+    if (usuariosValidos[usuario] && usuariosValidos[usuario] === clave) {
+      autenticado = true;
+      alert("¡Bienvenido/a " + usuario + "!");
+    } else {
+      alert("Usuario o contraseña incorrectos. Inténtalo de nuevo.");
+    }
+  }
+</script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#123c56">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="brand.css">
+  <link rel="stylesheet" href="dashboard.css">
+  <title>Inventario Flota</title>
+</head>
+<body>
+  <header class="topbar"><div class="brand"><img class="brand-logo" src="https://media.licdn.com/dms/image/v2/C4E0BAQEOiFaCFkeXNA/company-logo_200_200/company-logo_200_200/0/1631378544763/smart_delivery_routes_logo?e=2147483647&amp;v=beta&amp;t=BodsRzS7ida-AG_Gs37bD6FTz0mfXG6U3tyyt3F9gLA" alt="Smart Delivery Routes"><div><p class="eyebrow">SMART DELIVERY ROUTES · BASE OQA6</p><h1>Inventario de flota</h1></div></div><span class="responsive-label">Gestión OQA6<br>Móvil y escritorio</span></header>
+  <main>
+    <section id="dashboard" class="screen active">
+      <div class="summary"><div><span id="items-count">0</span><small>referencias</small></div><button class="summary-card warning" data-screen="requests"><span id="low-count">0</span><small>por pedir</small><b>Ver petición →</b></button><button class="summary-card expenses" data-screen="vehicle-expenses"><span id="vehicle-expense-count">0</span><small>gastos de piezas</small><b>Ver historial →</b></button></div>
+      <section class="card"><h2>Acciones rápidas</h2><div class="action-grid"><button class="action add" data-screen="reposition">＋<span>Reponer material</span></button><button class="action use" data-screen="expense">−<span>Registrar gasto</span></button></div></section>
+      <section class="card"><div class="section-title"><h2>Repuestos nuevos por pedir</h2><span class="pill">0–1 uds.</span></div><div id="low-stock-list" class="low-list"></div></section>
+      <section class="card"><div class="section-title"><h2>Últimos movimientos</h2><button class="text-button" data-screen="history">Ver todo</button></div><div id="recent-list" class="movement-list"></div></section>
+    </section>
+
+    <section id="inventory" class="screen"><div class="screen-heading"><h2>Inventario</h2><div class="heading-actions"><button class="secondary-button" data-screen="new-product">＋ Nuevo producto</button><button class="secondary-button" id="export-button">Exportar Excel</button></div></div><p class="screen-intro">Toca un material de la lista para editarlo o corregirlo a mano.</p><div class="filters"><label><span>Buscar</span><input id="search" type="search" placeholder="Material, producto…"></label><label><span>Grupo</span><select id="category-filter"><option value="all">Todo</option><option value="repuesto">Repuestos</option><option value="consumible">Productos y consumibles</option><option value="herramienta">Herramientas</option></select></label></div><div id="inventory-list" class="inventory-list"></div></section>
+
+    <section id="reposition" class="screen"><div class="screen-heading"><h2>Reponer materiales</h2></div><form id="reposition-form" class="form-card"><p class="hint">Rellena solo las líneas que necesites. Puedes añadir hasta ocho materiales a la vez.</p><div class="restock-head"><span>Material</span><span>Cantidad</span></div><div class="restock-row"><select class="item-select"></select><input type="number" min="1" inputmode="numeric" placeholder="Uds."></div><div class="restock-row"><select class="item-select"></select><input type="number" min="1" inputmode="numeric" placeholder="Uds."></div><div class="restock-row"><select class="item-select"></select><input type="number" min="1" inputmode="numeric" placeholder="Uds."></div><div class="restock-row"><select class="item-select"></select><input type="number" min="1" inputmode="numeric" placeholder="Uds."></div><div class="restock-row"><select class="item-select"></select><input type="number" min="1" inputmode="numeric" placeholder="Uds."></div><div class="restock-row"><select class="item-select"></select><input type="number" min="1" inputmode="numeric" placeholder="Uds."></div><div class="restock-row"><select class="item-select"></select><input type="number" min="1" inputmode="numeric" placeholder="Uds."></div><div class="restock-row"><select class="item-select"></select><input type="number" min="1" inputmode="numeric" placeholder="Uds."></div><button class="primary-button" type="submit">Guardar reposiciones</button></form></section>
+
+    <section id="expense" class="screen"><div class="screen-heading"><h2>Registrar gasto</h2></div><form id="expense-form" class="form-card"><label>Material<select id="expense-item" class="item-select" required></select></label><label>Cantidad gastada<input id="expense-quantity" type="number" min="1" step="1" value="1" inputmode="numeric" required></label><label>Matrícula <span class="optional">opcional</span><input id="expense-plate" type="text" placeholder="Ej. 1017NGJ" maxlength="10" autocapitalize="characters"></label><p class="hint">Rellena la matrícula solo si el gasto corresponde a una furgoneta. Esos gastos saldrán al final de la exportación.</p><button class="primary-button" type="submit">Registrar gasto</button></form></section>
+
+    <section id="history" class="screen"><div class="screen-heading"><h2>Movimientos</h2><button class="secondary-button" id="export-history-button">Exportar</button></div><div id="history-list" class="history-list"></div></section>
+    <section id="requests" class="screen"><div class="screen-heading"><h2>Peticiones de repuestos nuevos</h2><button class="secondary-button" data-screen="dashboard">Volver</button></div><p class="screen-intro">Solo incluye repuestos nuevos con 0 o 1 unidades. Los dañados, de desguace y protectores laterales están excluidos.</p><div id="requests-list" class="request-list"></div></section>
+    <section id="vehicle-expenses" class="screen"><div class="screen-heading"><h2>Gasto de piezas por matrícula</h2><button class="secondary-button" data-screen="dashboard">Volver</button></div><p class="screen-intro">Historial completo de piezas asociadas a furgonetas. Las que ya se incluyeron en una exportación semanal quedan marcadas como exportadas.</p><div id="vehicle-expenses-list" class="history-list"></div></section>
+    <section id="new-product" class="screen"><div class="screen-heading"><h2>Nuevo producto</h2><button class="secondary-button" data-screen="inventory">Volver</button></div><form id="new-product-form" class="form-card"><label>Nombre<input id="new-product-name" type="text" placeholder="Ej. Aceite de dirección" required></label><label>Grupo<select id="new-product-category" required><option value="">— Elige un grupo —</option><option value="repuesto">Repuesto</option><option value="consumible">Producto o consumible</option><option value="herramienta">Herramienta</option></select></label><label>Cantidad inicial<input id="new-product-quantity" type="number" min="0" step="1" value="0" inputmode="numeric"></label><label id="track-open-row" class="checkbox-label" style="display:none"><input id="new-product-tracks-open" type="checkbox"> Es un líquido de envase que se abre y se va gastando poco a poco (aceite, anticongelante, limpiaparabrisas…)</label><button class="primary-button" type="submit">Añadir producto</button></form></section>
+    <section id="edit-product" class="screen"><div class="screen-heading"><h2>Editar producto</h2><button class="secondary-button" data-screen="inventory">Volver</button></div><form id="edit-product-form" class="form-card"><p class="hint">Grupo: <strong id="edit-product-category-label"></strong></p><label>Nombre<input id="edit-product-name" type="text" required></label><label>Cantidad<input id="edit-product-quantity" type="number" min="0" step="1" inputmode="numeric"></label><label id="edit-expense-row">Gasto<input id="edit-product-expense" type="number" min="0" step="1" inputmode="numeric"></label><label id="edit-open-row"><span id="edit-open-label">Abierto</span><input id="edit-product-open" type="number" min="0" step="1" inputmode="numeric"></label><label id="edit-tracks-open-row" class="checkbox-label" style="display:none"><input id="edit-product-tracks-open" type="checkbox"> Es un líquido de envase que se abre y se va gastando poco a poco</label><button class="primary-button" type="submit">Guardar cambios</button><button class="secondary-button danger-button" type="button" id="edit-delete-button">Eliminar producto</button></form></section>
+  </main>
+  <nav class="bottom-nav"><button class="nav-button active" data-screen="dashboard">⌂<span>Inicio</span></button><button class="nav-button" data-screen="inventory">▤<span>Inventario</span></button><button class="nav-button central" data-screen="expense">＋<span>Gasto</span></button><button class="nav-button" data-screen="reposition">↥<span>Reponer</span></button><button class="nav-button" data-screen="history">◷<span>Historial</span></button></nav>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
