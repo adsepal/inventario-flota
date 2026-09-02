@@ -17,10 +17,10 @@
 // guardados en el propio móvil (como hasta ahora), solo que sin
 // compartir con nadie más.
 const firebaseConfig = {
-  apiKey: "AIzaSyBMUH4Z7-D5x1MbORks9uFg_aZiTC7t3DU",
-  authDomain: "inventariooqa6.firebaseapp.com",
-  databaseURL: "https://inventariooqa6-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "inventariooqa6"
+  apiKey: "PEGA_AQUI_TU_API_KEY",
+  authDomain: "PEGA_AQUI_TU_PROYECTO.firebaseapp.com",
+  databaseURL: "https://PEGA_AQUI_TU_PROYECTO-default-rtdb.firebaseio.com",
+  projectId: "PEGA_AQUI_TU_PROYECTO"
 };
 let dbRef = null;
 try{
@@ -29,7 +29,7 @@ try{
     dbRef = firebase.database().ref('inventario-flota');
   }
 }catch(e){ console.warn('Firebase no disponible, se usarán solo los datos de este móvil.', e) }
- 
+
 // ====================================================================
 // DATOS INICIALES
 // ====================================================================
@@ -64,7 +64,7 @@ const seed = [
   ['repuesto','PROTECTORES LATERALES EXPERT DELANTERO DERECHO*',1,0,0,1],
   ['repuesto','TAPACUBOS PEUGEOT (MODELO ANTIGUO)',5,0,0,5],
   ['repuesto','TAPACUBOS PEUGEOT (MODELO NUEVO)',2,0,0,2],
- 
+
   ['consumible','ACEITE 0W30',1,0,1,2,true],
   ['consumible','ACEITE 5W30',1,0,1,2,true],
   ['consumible','LIQUIDO FRENOS',2,0,1,3,true],
@@ -85,7 +85,7 @@ const seed = [
   ['consumible','MECHAS',10,0,0,10,false],
   ['consumible','WD40',0,0,1,1,true],
   ['consumible','GRAPAS MOLDURAS PEUGEOT (bolsa)',1,0,0,1,false],
- 
+
   ['herramienta','COMPRESORES',2,'','',''],
   ['herramienta','MALETIN CARRACAS',1,'','',''],
   ['herramienta','SOLDADOR ESTAÑO',1,'','',''],
@@ -104,12 +104,12 @@ const seed = [
   ['herramienta','TAPONES DE VALVULA',1,'','',1],
   ['herramienta','SPRAY LIMPIA-FRENOS',1,'','',1]
 ].map(([category,name,quantity,expense,open,total,tracksOpen],i)=>({id:`i${i}`,category,name,quantity,expense,open,total,tracksOpen:!!tracksOpen}));
- 
+
 // ====================================================================
 // ESTADO Y PERSISTENCIA
 // ====================================================================
 let state = {items:seed, movements:[]};
- 
+
 function ensureTracksOpen(){
   const byName = {};
   seed.forEach(s=>{ byName[s.name] = s.tracksOpen });
@@ -122,25 +122,25 @@ function ensureTracksOpen(){
   });
   return changed;
 }
- 
+
 function loadLocalFallback(){
   try{ state = JSON.parse(localStorage.getItem('inventario-flota-v3')) || {items:seed, movements:[]} }
   catch{ state = {items:seed, movements:[]} }
   ensureTracksOpen();
 }
- 
+
 function saveRemote(){
   if(dbRef) dbRef.set(state).catch(e=>console.error('No se pudo sincronizar con Firebase:', e));
 }
- 
+
 function persist(){
   localStorage.setItem('inventario-flota-v3', JSON.stringify(state)); // copia local de respaldo
   saveRemote();
   render();
 }
- 
+
 function asList(v){ return Array.isArray(v) ? v : Object.values(v||{}) }
- 
+
 function boot(){
   if(dbRef){
     dbRef.on('value', snap=>{
@@ -163,23 +163,25 @@ function boot(){
     render();
   }
 }
- 
+
 // ====================================================================
 // UTILIDADES
 // ====================================================================
 const $=s=>document.querySelector(s),
   esc=s=>String(s??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x])),
   group={repuesto:'MATERIAL',consumible:'PRODUCTOS',herramienta:'HERRAMIENTAS DISPONIBLES EN BASE OQA6'};
- 
+
 function optionList(filterFn){
   return state.items.filter(filterFn || (()=>true)).map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('');
 }
 function fdate(x){ return new Intl.DateTimeFormat('es-ES',{dateStyle:'short',timeStyle:'short'}).format(new Date(x)) }
- 
+
 // Cantidad = stock cerrado. Abierto = para consumibles, 0/1 según si hay
 // envase abierto en uso ahora mismo (o "usado" para repuestos, campo legado).
-// Gasto: para repuestos es lo pendiente de descontar en el cierre semanal;
-// para consumibles es solo un histórico informativo, ya no resta del Total.
+// Gasto: para repuestos es lo pendiente de descontar en el cierre semanal.
+// En consumibles ya NO se toca automáticamente al registrar un gasto (todo
+// el efecto se ve directo en Cantidad/Abierto) — solo cambia si lo editas
+// tú a mano en "Editar producto", por si quieres usarlo de nota propia.
 function total(x){
   if(x.category==='herramienta') return x.total??'';
   if(x.category==='repuesto') return Number(x.quantity)-Number(x.expense||0)+Number(x.open||0);
@@ -187,7 +189,7 @@ function total(x){
 }
 function isOrderable(x){ return x.category==='repuesto' && !/DAÑADO|DESGUACE|PROTECTORES LATERALES/i.test(x.name) }
 function isLowAlert(x){ let value=total(x); return value!==''&&Number(value)<=1&&!/DAÑADO|DESGUACE/i.test(x.name) }
- 
+
 // ====================================================================
 // RENDER
 // ====================================================================
@@ -230,7 +232,7 @@ function toast(msg){
   let x=$('#toast'); x.textContent=msg; x.classList.add('show');
   clearTimeout(window.tt); window.tt=setTimeout(()=>x.classList.remove('show'),2500);
 }
- 
+
 // ====================================================================
 // ACCIONES
 // ====================================================================
@@ -248,7 +250,7 @@ function addRows(){
   screen('dashboard');
   toast(`${valid.length} reposición(es) guardada(s)`);
 }
- 
+
 function expense(){
   let id=$('#expense-item').value,
     amount=Number($('#expense-quantity').value),
@@ -268,7 +270,6 @@ function expense(){
       if(Number(item.quantity)<amount){ toast(`Solo quedan ${item.quantity} unidades`); return }
       item.quantity=Number(item.quantity)-amount;
     }
-    item.expense=Number(item.expense||0)+amount; // histórico informativo, no resta del Total
   } else if(item.category==='repuesto'){
     item.expense=Number(item.expense||0)+amount;
   } else {
@@ -280,7 +281,7 @@ function expense(){
   screen('dashboard');
   toast(item.category==='repuesto'&&total(item)<0?`Gasto registrado (queda en ${total(item)}, pendiente de reponer)`:'Gasto registrado');
 }
- 
+
 function addProduct(){
   let name=$('#new-product-name').value.trim(),
     category=$('#new-product-category').value,
@@ -304,7 +305,7 @@ function addProduct(){
   screen('inventory');
   toast('Producto añadido al inventario');
 }
- 
+
 let editingId=null;
 function openEdit(id){
   let item=state.items.find(x=>x.id===id);
@@ -352,7 +353,7 @@ function deleteEdit(){
   screen('inventory');
   toast('Producto eliminado');
 }
- 
+
 // ====================================================================
 // EXPORTACIÓN A EXCEL
 // ====================================================================
@@ -393,7 +394,7 @@ function exportExcel(){
   persist();
   toast('Excel exportado y semana de repuestos cerrada');
 }
- 
+
 // ====================================================================
 // EVENTOS
 // ====================================================================
@@ -409,4 +410,3 @@ $('#edit-delete-button').onclick=deleteEdit;
 $('#export-button').onclick=exportExcel;
 $('#export-history-button').onclick=exportExcel;
 boot();
- 
