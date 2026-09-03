@@ -17,10 +17,10 @@
 // guardados en el propio móvil (como hasta ahora), solo que sin
 // compartir con nadie más.
 const firebaseConfig = {
-  apiKey: "PEGA_AQUI_TU_API_KEY",
-  authDomain: "PEGA_AQUI_TU_PROYECTO.firebaseapp.com",
-  databaseURL: "https://PEGA_AQUI_TU_PROYECTO-default-rtdb.firebaseio.com",
-  projectId: "PEGA_AQUI_TU_PROYECTO"
+  apiKey: "AIzaSyBMUH4Z7-D5x1MbORks9uFg_aZiTC7t3DU",
+  authDomain: "inventariooqa6.firebaseapp.com",
+  databaseURL: "https://inventariooqa6-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "inventariooqa6"
 };
 let dbRef = null;
 try{
@@ -187,8 +187,8 @@ function total(x){
   if(x.category==='repuesto') return Number(x.quantity)-Number(x.expense||0)+Number(x.open||0);
   return Number(x.quantity)+Number(x.open||0);
 }
-function isOrderable(x){ return x.category==='repuesto' && !/DAÑADO|DESGUACE|PROTECTORES LATERALES/i.test(x.name) }
-function isLowAlert(x){ let value=total(x); return value!==''&&Number(value)<=1&&!/DAÑADO|DESGUACE/i.test(x.name) }
+function isOrderable(x){ return x.category==='repuesto' && !x.noRequest && !/DAÑADO|DESGUACE|PROTECTORES LATERALES/i.test(x.name) }
+function isLowAlert(x){ let value=total(x); return value!==''&&Number(value)<=1&&!x.noRequest&&!/DAÑADO|DESGUACE/i.test(x.name) }
 
 // ====================================================================
 // RENDER
@@ -324,6 +324,8 @@ function openEdit(id){
   }
   $('#edit-tracks-open-row').style.display=item.category==='consumible'?'flex':'none';
   if(item.category==='consumible') $('#edit-product-tracks-open').checked=!!item.tracksOpen;
+  $('#edit-no-request-row').style.display=item.category==='repuesto'?'flex':'none';
+  if(item.category==='repuesto') $('#edit-product-no-request').checked=!!item.noRequest;
   screen('edit-product');
 }
 function saveEdit(){
@@ -338,6 +340,7 @@ function saveEdit(){
     item.open=Number($('#edit-product-open').value)||0;
   }
   if(item.category==='consumible') item.tracksOpen=$('#edit-product-tracks-open').checked;
+  if(item.category==='repuesto') item.noRequest=$('#edit-product-no-request').checked;
   persist();
   editingId=null;
   screen('inventory');

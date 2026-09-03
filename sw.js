@@ -1,4 +1,4 @@
-const CACHE='inventario-flota-v7';
+const CACHE='inventario-flota-v8';
 const ASSETS=['./','./index.html','./styles.css','./brand.css','./dashboard.css','./app.js','./manifest.webmanifest'];
 self.addEventListener('install',e=>{
   self.skipWaiting();
