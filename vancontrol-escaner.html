@@ -61,7 +61,7 @@
 
   <button id="botonFlash" onclick="alternarFlash()">🔦 Encender flash</button>
 
-  <a class="volver" href="https://script.google.com/macros/s/AKfycbwwkgddPbxxIWXIx2ZP5l-p2HooQFFpD38jIWk7cyZGD6GoWLJvmPA1NKS0LCezd8lq/exec">← Abrir VanControl sin escanear</a>
+  <a class="volver" href="javascript:void(0)" onclick="window.location.href = URL_APP;">← Abrir VanControl sin escanear</a>
 
   <script>
 
@@ -119,20 +119,114 @@
 
     }
 
-    html5QrCode.start(
-      { facingMode: "environment" },
-      { fps: 10, qrbox: 240 },
-      alDetectar,
-      function() {
-        // "todavía no detecto nada" — se dispara todo el rato
-        // mientras se apunta, se ignora a propósito.
+    // El recuadro se calcula SIEMPRE cuadrado a partir del tamaño real
+    // del visor en ese momento (antes era un número fijo y, si el
+    // navegador arrancaba la cámara con el visor a medio dimensionar,
+    // salía un rectángulo vertical que no leía hasta recargar).
+    function calcularQrbox(anchoVisor, altoVisor) {
+      const lado = Math.floor(Math.min(anchoVisor, altoVisor) * 0.7);
+      const l = Math.max(120, Math.min(lado, 320));
+      return { width: l, height: l };
+    }
+
+    let arrancando = false;
+    let reintentosAuto = 0;
+
+    function arrancar() {
+
+      if (arrancando) return Promise.resolve();
+      arrancando = true;
+
+      return html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: calcularQrbox },
+        alDetectar,
+        function() {
+          // "todavía no detecto nada" — se dispara todo el rato
+          // mientras se apunta, se ignora a propósito.
+        }
+      ).then(function() {
+        arrancando = false;
+        comprobarFlash();
+        setTimeout(vigilarRecuadro, 700);
+      }).catch(function(err) {
+        arrancando = false;
+        estado.style.color = '#ef4444';
+        estado.textContent = 'No se pudo acceder a la cámara: ' + err;
+      });
+
+    }
+
+    function reiniciar() {
+
+      if (arrancando) return;
+
+      let corriendo = false;
+      try { corriendo = html5QrCode.getState() === 2; } catch (e) {}
+
+      const parado = corriendo
+        ? html5QrCode.stop().catch(function() {})
+        : Promise.resolve();
+
+      parado.then(function() {
+        document.getElementById('botonFlash').style.display = 'none';
+        torchActivo = false;
+        document.getElementById('botonFlash').textContent = '🔦 Encender flash';
+        return arrancar();
+      });
+
+    }
+
+    // Comprueba que el recuadro de lectura es cuadrado; si no lo es
+    // (el fallo de antes), reinicia la cámara sola, sin tener que
+    // recargar la página. Máximo 3 intentos seguidos para no hacer bucle.
+    function vigilarRecuadro() {
+
+      const sombra = document.getElementById('qr-shaded-region');
+      if (!sombra) return;
+
+      const cs = window.getComputedStyle(sombra);
+      const bx = parseFloat(cs.borderLeftWidth) || 0;
+      const by = parseFloat(cs.borderTopWidth) || 0;
+      const anchoCaja = sombra.offsetWidth - 2 * bx;
+      const altoCaja = sombra.offsetHeight - 2 * by;
+
+      if (Math.abs(anchoCaja - altoCaja) > 6 && reintentosAuto < 3) {
+        reintentosAuto++;
+        reiniciar();
+      } else if (Math.abs(anchoCaja - altoCaja) <= 6) {
+        reintentosAuto = 0;
       }
-    ).then(function() {
-      comprobarFlash();
-    }).catch(function(err) {
-      estado.style.color = '#ef4444';
-      estado.textContent = 'No se pudo acceder a la cámara: ' + err;
+
+    }
+
+    // Al girar el móvil o cambiar el tamaño, el visor cambia y el
+    // recuadro quedaría deformado: se reinicia la cámara.
+    let temporizadorResize = null;
+    function alCambiarTamano() {
+      clearTimeout(temporizadorResize);
+      temporizadorResize = setTimeout(function() {
+        reintentosAuto = 0;
+        reiniciar();
+      }, 500);
+    }
+    window.addEventListener('orientationchange', alCambiarTamano);
+    window.addEventListener('resize', alCambiarTamano);
+
+    // Al volver a la pestaña (p. ej. tras bloquear el móvil) la
+    // cámara puede haberse quedado parada.
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) {
+        let corriendo = false;
+        try { corriendo = html5QrCode.getState() === 2; } catch (e) {}
+        if (!corriendo) reiniciar();
+      }
     });
+
+    // Se arranca cuando la página ya está maquetada del todo.
+    function inicio() { setTimeout(arrancar, 250); }
+    if (document.readyState === 'complete') inicio();
+    else window.addEventListener('load', inicio);
 
   </script>
 
